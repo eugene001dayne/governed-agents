@@ -1,0 +1,57 @@
+name: Keep Render Services Warm
+
+# Pings all five governance services every 10 minutes so Render free-tier
+# never cold-starts during the demo. Each service /health endpoint returns
+# {"status": "ok"} instantly when warm.
+
+on:
+  schedule:
+    # Every 10 minutes. Render spins down after 15 minutes of inactivity,
+    # so 10 minutes gives a comfortable buffer.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # also allow manual trigger from GitHub Actions UI
+
+jobs:
+  ping:
+    name: Ping governance services
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Ping Iron-Thread
+        run: |
+          echo "Pinging Iron-Thread..."
+          curl -sf --max-time 60 https://governed-agents-iron-thread.onrender.com/health \
+            && echo "✓ Iron-Thread warm" \
+            || echo "⚠ Iron-Thread did not respond (may be starting up)"
+
+      - name: Ping AgentID
+        run: |
+          echo "Pinging AgentID..."
+          curl -sf --max-time 60 https://governed-agents-agentid.onrender.com/health \
+            && echo "✓ AgentID warm" \
+            || echo "⚠ AgentID did not respond (may be starting up)"
+
+      - name: Ping ChainThread
+        run: |
+          echo "Pinging ChainThread..."
+          curl -sf --max-time 60 https://governed-agents-chainthread.onrender.com/health \
+            && echo "✓ ChainThread warm" \
+            || echo "⚠ ChainThread did not respond (may be starting up)"
+
+      - name: Ping PolicyThread
+        run: |
+          echo "Pinging PolicyThread..."
+          curl -sf --max-time 60 https://governed-agents-policythread.onrender.com/health \
+            && echo "✓ PolicyThread warm" \
+            || echo "⚠ PolicyThread did not respond (may be starting up)"
+
+      - name: Ping ThreadWatch
+        run: |
+          echo "Pinging ThreadWatch..."
+          curl -sf --max-time 60 https://governed-agents-threadwatch.onrender.com/health \
+            && echo "✓ ThreadWatch warm" \
+            || echo "⚠ ThreadWatch did not respond (may be starting up)"
+
+      - name: Summary
+        run: echo "All ping steps complete. Check above for any warnings."
